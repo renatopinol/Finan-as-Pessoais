@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Controle financeiro pessoal simples e moderno" />
+  <title>Finanças Pessoais</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Finanças</span>
+      </div>
+      <nav class="nav" aria-label="Principal">
+        <button class="nav-btn active" data-page="inicio" type="button">Início</button>
+        <button class="nav-btn" data-page="despesas" type="button">Despesas</button>
+        <button class="nav-btn" data-page="dividas" type="button">Dívidas</button>
+        <button class="nav-btn" data-page="config" type="button">Configurações</button>
+      </nav>
+    </header>
+
+    <main class="main">
+      <!-- INÍCIO -->
+      <section id="page-inicio" class="page active">
+        <div class="page-head">
+          <div>
+            <h1>Olá! 👋</h1>
+            <p class="subtitle">Veja como estão suas finanças este mês.</p>
+          </div>
+          <label class="month-picker">
+            <span class="sr-only">Mês</span>
+            <input type="month" id="month-select" />
+          </label>
+        </div>
+
+        <div id="demo-banner" class="demo-banner hidden">
+          <p>Você está vendo dados de demonstração.</p>
+          <button type="button" id="btn-start-real" class="btn btn-primary btn-sm">Começar com meus dados</button>
+        </div>
+
+        <div class="cards-grid" id="summary-cards"></div>
+
+        <div class="panel-grid">
+          <article class="panel">
+            <h2>Onde está seu dinheiro</h2>
+            <div class="chart-wrap">
+              <canvas id="chart-categories" aria-label="Distribuição de gastos"></canvas>
+              <p id="chart-empty" class="empty-hint hidden">Nenhum gasto neste mês ainda.</p>
+            </div>
+            <div class="top-spends">
+              <h3>Seus maiores gastos este mês</h3>
+              <ul id="top-categories" class="rank-list"></ul>
+            </div>
+          </article>
+
+          <article class="panel">
+            <h2>Custos fixos vs. variáveis</h2>
+            <div class="split-cards" id="fixed-variable"></div>
+            <p id="fixed-ratio-msg" class="hint-text"></p>
+            <div id="fixed-alert" class="alert alert-warn hidden">
+              Seus custos fixos estão altos demais em relação à renda. Vale revisar o que pode ser ajustado.
+            </div>
+          </article>
+        </div>
+
+        <article class="panel">
+          <h2>Como está seu mês?</h2>
+          <p id="health-msg" class="hint-text"></p>
+          <div class="health-bar" aria-hidden="true">
+            <div id="health-fill" class="health-fill"></div>
+          </div>
+          <p id="health-label" class="health-label"></p>
+        </article>
+
+        <article class="panel">
+          <h2>💡 Insights do mês</h2>
+          <ul id="insights-list" class="insights"></ul>
+        </article>
+
+        <article class="panel">
+          <h2>Últimos meses</h2>
+          <div class="chart-wrap chart-history">
+            <canvas id="chart-history" aria-label="Histórico mensal"></canvas>
+          </div>
+          <div id="history-cards" class="history-cards"></div>
+        </article>
+      </section>
+
+      <!-- DESPESAS -->
+      <section id="page-despesas" class="page">
+        <div class="page-head">
+          <div>
+            <h1>Despesas</h1>
+            <p class="subtitle">Registre gastos em poucos segundos.</p>
+          </div>
+          <button type="button" class="btn btn-primary" id="btn-add-expense">+ Adicionar despesa</button>
+        </div>
+
+        <div class="panel">
+          <div class="expense-summary">
+            <span>Total de despesas do mês</span>
+            <strong id="expense-month-total">R$ 0,00</strong>
+          </div>
+
+          <div class="filters">
+            <label class="field field-inline">
+              <span>Mês</span>
+              <input type="month" id="expense-month-filter" />
+            </label>
+            <label class="field field-inline">
+              <span>Categoria</span>
+              <select id="expense-category-filter"></select>
+            </label>
+            <label class="field field-inline">
+              <span>Tipo</span>
+              <select id="expense-type-filter">
+                <option value="all">Todos</option>
+                <option value="fixo">Fixo</option>
+                <option value="variavel">Variável</option>
+              </select>
+            </label>
+            <label class="field field-inline field-grow">
+              <span>Buscar</span>
+              <input type="search" id="expense-search" placeholder="Descrição..." />
+            </label>
+          </div>
+
+          <div id="expense-list" class="item-list"></div>
+        </div>
+      </section>
+
+      <!-- DÍVIDAS -->
+      <section id="page-dividas" class="page">
+        <div class="page-head">
+          <div>
+            <h1>Dívidas</h1>
+            <p class="subtitle">Controle simples do que você ainda deve.</p>
+          </div>
+          <button type="button" class="btn btn-primary" id="btn-add-debt">+ Adicionar dívida</button>
+        </div>
+
+        <div class="panel panel-soft" id="debts-month-impact">
+          <span>Total planejado para dívidas neste mês</span>
+          <strong id="debts-planned-total">R$ 0,00</strong>
+        </div>
+
+        <div id="debt-list" class="debt-list"></div>
+      </section>
+
+      <!-- CONFIGURAÇÕES -->
+      <section id="page-config" class="page">
+        <div class="page-head">
+          <div>
+            <h1>Configurações</h1>
+            <p class="subtitle">Ajuste renda, investimentos e categorias.</p>
+          </div>
+        </div>
+
+        <article class="panel">
+          <h2>Renda mensal</h2>
+          <div class="form-grid">
+            <label class="field">
+              <span>Salário líquido</span>
+              <input type="text" id="cfg-salary" inputmode="decimal" placeholder="0,00" />
+            </label>
+            <label class="field">
+              <span>Outras rendas</span>
+              <input type="text" id="cfg-other-income" inputmode="decimal" placeholder="0,00" />
+            </label>
+          </div>
+          <button type="button" class="btn btn-primary" id="btn-save-income">Salvar renda</button>
+        </article>
+
+        <article class="panel">
+          <h2>Preferência de investimento</h2>
+          <p class="hint-text">Quanto da sua sobra você gostaria de investir?</p>
+          <div class="slider-row">
+            <span>0%</span>
+            <input type="range" id="cfg-invest-pct" min="0" max="100" step="5" value="50" />
+            <span>100%</span>
+          </div>
+          <p class="slider-value"><strong id="cfg-invest-label">50%</strong> da sobra</p>
+        </article>
+
+        <article class="panel">
+          <h2>Categorias</h2>
+          <div class="category-add">
+            <input type="text" id="new-category-name" placeholder="Nova categoria" maxlength="40" />
+            <input type="color" id="new-category-color" value="#5B8DEF" title="Cor" />
+            <button type="button" class="btn btn-secondary" id="btn-add-category">Adicionar</button>
+          </div>
+          <ul id="category-list" class="category-list"></ul>
+        </article>
+
+        <article class="panel">
+          <h2>Seus dados</h2>
+          <p class="hint-text">
+            Seus dados ficam armazenados somente neste navegador. Recomendamos exportar um backup periodicamente.
+          </p>
+          <div class="btn-row">
+            <button type="button" class="btn btn-secondary" id="btn-export">Exportar backup</button>
+            <label class="btn btn-secondary file-btn">
+              Importar dados
+              <input type="file" id="btn-import" accept="application/json,.json" hidden />
+            </label>
+            <button type="button" class="btn btn-danger" id="btn-clear-data">Apagar todos os dados</button>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <button type="button" class="fab" id="fab-add-expense" aria-label="Adicionar despesa">+</button>
+  </div>
+
+  <!-- Modal despesa -->
+  <div class="modal-backdrop hidden" id="modal-expense" role="dialog" aria-modal="true" aria-labelledby="expense-modal-title">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="expense-modal-title">Adicionar despesa</h2>
+        <button type="button" class="icon-btn" data-close="modal-expense" aria-label="Fechar">×</button>
+      </div>
+      <form id="form-expense">
+        <input type="hidden" id="expense-id" />
+        <label class="field">
+          <span>Descrição</span>
+          <input type="text" id="expense-desc" required maxlength="80" placeholder="Ex: Supermercado" />
+        </label>
+        <label class="field">
+          <span>Valor</span>
+          <input type="text" id="expense-value" required inputmode="decimal" placeholder="250,00" />
+        </label>
+        <label class="field">
+          <span>Categoria</span>
+          <select id="expense-category" required></select>
+        </label>
+        <fieldset class="type-toggle">
+          <legend>Tipo</legend>
+          <label><input type="radio" name="expense-type" value="variavel" checked /> Variável</label>
+          <label><input type="radio" name="expense-type" value="fixo" /> Fixo</label>
+        </fieldset>
+        <div id="recurring-wrap" class="recurring-wrap hidden">
+          <label class="check">
+            <input type="checkbox" id="expense-recurring" />
+            Repetir automaticamente nos próximos meses
+          </label>
+        </div>
+        <label class="field">
+          <span>Data</span>
+          <input type="date" id="expense-date" required />
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">Adicionar despesa</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal dívida -->
+  <div class="modal-backdrop hidden" id="modal-debt" role="dialog" aria-modal="true" aria-labelledby="debt-modal-title">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="debt-modal-title">Adicionar dívida</h2>
+        <button type="button" class="icon-btn" data-close="modal-debt" aria-label="Fechar">×</button>
+      </div>
+      <form id="form-debt">
+        <input type="hidden" id="debt-id" />
+        <label class="field">
+          <span>Para quem devo?</span>
+          <input type="text" id="debt-creditor" required maxlength="60" placeholder="Ex: João" />
+        </label>
+        <label class="field">
+          <span>Valor total da dívida</span>
+          <input type="text" id="debt-total" required inputmode="decimal" placeholder="2000,00" />
+        </label>
+        <label class="field">
+          <span>Quanto já paguei? <em>(opcional)</em></span>
+          <input type="text" id="debt-paid" inputmode="decimal" placeholder="0,00" />
+        </label>
+        <label class="field">
+          <span>Quanto pretendo pagar este mês?</span>
+          <input type="text" id="debt-planned" required inputmode="decimal" placeholder="300,00" />
+        </label>
+        <label class="field">
+          <span>Descrição <em>(opcional)</em></span>
+          <input type="text" id="debt-desc" maxlength="100" placeholder="Ex: Empréstimo" />
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">Salvar dívida</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal pagamento -->
+  <div class="modal-backdrop hidden" id="modal-payment" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
+    <div class="modal modal-sm">
+      <div class="modal-head">
+        <h2 id="payment-modal-title">Registrar pagamento</h2>
+        <button type="button" class="icon-btn" data-close="modal-payment" aria-label="Fechar">×</button>
+      </div>
+      <form id="form-payment">
+        <input type="hidden" id="payment-debt-id" />
+        <p class="hint-text" id="payment-debt-info"></p>
+        <label class="field">
+          <span>Valor pago</span>
+          <input type="text" id="payment-value" required inputmode="decimal" placeholder="300,00" />
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">Confirmar pagamento</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden" role="status"></div>
+</body>
+</html>
